@@ -1,0 +1,47 @@
+{
+  "retirement_facts": {
+    "savings_rate": {
+      "optimal_rate": "The optimal retirement savings rate is typically between 10-15% of your annual income, depending on age and desired retirement lifestyle."
+    },
+    "inflation": {
+      "description": "The rate at which prices increase over time, eroding purchasing power",
+      "average_rate": 0.025,
+      "impact": "Retirement savings need to account for inflation to maintain standard of living",
+      "long_term_impact": "Inflation averaging 2-3% per year significantly impacts retirement savings and should be factored into all retirement planning calculations",
+      "future_projection": "The inflation rate in 2025 is projected to be 3%"
+    },
+    "investment_returns": {
+      "stocks": {
+        "average_historical": 0.10,
+        "risk_level": "high",
+        "recommendation": "Higher allocation recommended for younger investors with longer time horizons"
+      },
+      "bonds": {
+        "average_historical": 0.05,
+        "risk_level": "medium",
+        "recommendation": "Increase allocation as retirement approaches for stability"
+      },
+      "cash": {
+        "average_historical": 0.02,
+        "risk_level": "low",
+        "recommendation": "Keep minimum needed for emergencies and short-term expenses"
+      }
+    },
+    "withdrawal_rates": {
+      "4_percent_rule": {
+        "description": "The 4% rule suggests withdrawing 4% of your retirement savings in your first year of retirement, then adjusting that amount for inflation each year",
+        "sustainability": "Has historically provided a high probability of portfolio lasting 30+ years"
+      }
+    },
+    "retirement_savings_benchmarks": {
+      "by_age_30": "1x annual salary",
+      "by_age_35": "2x annual salary",
+      "by_age_40": "3x annual salary",
+      "by_age_45": "4x annual salary",
+      "by_age_50": "6x annual salary",
+      "by_age_55": "7x annual salary",
+      "by_age_60": "8x annual salary",
+      "by_age_67": "10x annual salary"
+    }
+  }
+}
