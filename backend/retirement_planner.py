@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 import os
 import json
+import hashlib
 import faiss
 import numpy as np
 import ollama
@@ -307,6 +308,36 @@ def flatten_facts(facts: dict) -> str:
                 lines.append(f"{prefix}{k.replace('_', ' ')}: {v}")
         return lines
     return "\n".join(flatten(facts))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Caching Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def compute_user_key(user_input: dict) -> str:
+    """Compute a consistent hash key from user input."""
+    serialized = json.dumps(user_input, sort_keys=True)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+def load_plan_cache(path="data/retirement_plan_cache.json") -> dict:
+    """Load cached plans keyed by user input hash."""
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading plan cache: {e}")
+        return {}
+
+def save_plan_cache(key: str, plan_data: dict, path="data/retirement_plan_cache.json"):
+    """Save plan data in cache by key."""
+    cache = load_plan_cache(path)
+    cache[key] = plan_data
+    try:
+        with open(path, "w") as f:
+            json.dump(cache, f, indent=2)
+    except Exception as e:
+        logger.error(f"Error saving plan cache: {e}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Format User Input with Enhanced Validation
@@ -728,11 +759,17 @@ def load_all_user_profiles(path="data/retirement_user_data.json"):
 
 def calculate_retirement(user_input):
     """Main function to calculate retirement plan"""
+    key = compute_user_key(user_input)
+    cache = load_plan_cache()
+
+    if key in cache:
+        plan_data = cache[key]
+    else:
+        plan_data = create_retirement_plan(user_input)
+        save_plan_cache(key, plan_data)
+
     # Save user profile and get ID
     profile_id = save_user_profile(user_input)
-    
-    # Generate the retirement plan
-    plan_data = create_retirement_plan(user_input)
     
     # Add profile ID to result
     if profile_id:
@@ -910,7 +947,7 @@ This projection assumes:
 - Inflation impact on purchasing power
 
 ### 🌟 Final Thoughts
-{'You\'re in a great position — with consistency and smart investing, you\'re on track to retire comfortably. Keep the momentum going!' if metrics['gap_to_goal'] <= 0 else 'While there\'s work to be done, remember that every step forward counts. Stay committed to your plan, and you\'ll build the retirement you deserve.'}"""
+{"You're in a great position — with consistency and smart investing, you're on track to retire comfortably. Keep the momentum going!" if metrics['gap_to_goal'] <= 0 else "While there's work to be done, remember that every step forward counts. Stay committed to your plan, and you'll build the retirement you deserve."}"""
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Application Startup
