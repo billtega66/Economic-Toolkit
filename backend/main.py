@@ -11,7 +11,6 @@ import time
 load_dotenv()
 import logging
 import os
-import requests
 
 
 from typing import List
@@ -39,18 +38,6 @@ scheduler = AsyncIOScheduler()
 # Initialize NewsFetcher
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "d403798f40db4331bae14a26284e9d71")
 news_fetcher = NewsFetcher(api_key=NEWS_API_KEY, db=db)
-
-def fetch_with_retry(ticker, retries=3):
-    for i in range(retries):
-        try:
-            return ticker.history(...)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 429:
-                wait = 2 ** i
-                logger.warning(f"Rate limited. Retrying in {wait}s...")
-                time.sleep(wait)
-            else:
-                raise
 
 # FastAPI app with lifespan context
 @asynccontextmanager
