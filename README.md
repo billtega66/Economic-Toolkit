@@ -63,6 +63,17 @@ uvicorn main:app --reload --host 0.0.0.0 --port 4000
 npm install
 ```
 
+Alternatively, run the provided setup script which also installs all
+development dependencies:
+```bash
+./scripts/setup.sh
+```
+
+To verify that all required packages are installed, you can run:
+```bash
+./scripts/check-deps.sh
+```
+
 2. Start the development server:
 ```bash
 npm run dev
