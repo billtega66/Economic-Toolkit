@@ -1,27 +1,51 @@
+import types
+import sys
+import importlib
 from pathlib import Path
 
-class DummyLogger:
-    def warning(self, *args, **kwargs):
-        pass
+# Stub heavy optional dependencies so the module can be imported
+sys.modules.setdefault("faiss", types.ModuleType("faiss"))
+sys.modules.setdefault("ollama", types.ModuleType("ollama"))
+sys.modules.setdefault("numpy", types.ModuleType("numpy"))
+jinja2_mod = types.ModuleType("jinja2")
+setattr(jinja2_mod, "Template", object)
+sys.modules.setdefault("jinja2", jinja2_mod)
 
-def load_format_user_data():
-    path = Path(__file__).resolve().parents[1] / "retirement_planner.py"
-    lines = path.read_text().splitlines()
-    code = "\n".join(lines[314:347])
-    namespace = {"logger": DummyLogger()}
-    exec(code, namespace)
-    return namespace["format_user_data"]
+st = sys.modules.setdefault("sentence_transformers", types.ModuleType("sentence_transformers"))
+setattr(st, "SentenceTransformer", object)
+setattr(st, "CrossEncoder", object)
 
-format_user_data = load_format_user_data()
+lc_docs = types.ModuleType("langchain_core.documents")
+setattr(lc_docs, "Document", object)
+sys.modules.setdefault("langchain_core", types.ModuleType("langchain_core"))
+sys.modules.setdefault("langchain_core.documents", lc_docs)
+
+lts = types.ModuleType("langchain_text_splitters")
+setattr(lts, "RecursiveCharacterTextSplitter", object)
+sys.modules.setdefault("langchain_text_splitters", lts)
+
+# Add backend directory to sys.path so relative imports work
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+# Import module now that dependencies are stubbed
+spec = importlib.util.spec_from_file_location(
+    "retirement_planner",
+    (Path(__file__).resolve().parents[1] / "retirement_planner.py")
+)
+retirement_planner = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(retirement_planner)
+format_user_data = retirement_planner.format_user_data
 
 
 def test_age_clamped_low_high():
     assert format_user_data({"age": 10, "retirementAge": 20})["age"] == 18
     assert format_user_data({"age": 150, "retirementAge": 160})["age"] == 100
 
+
 def test_retirement_age_adjusted():
     res = format_user_data({"age": 40, "retirementAge": 40})
     assert res["retirement_age"] == 45
+
 
 def test_other_fields_unchanged():
     data = {
@@ -63,3 +87,4 @@ def test_other_fields_unchanged():
     assert result["has_investment"] is True
     assert result["investment_value"] == 15000
     assert result["retirement_goal"] == 1000000
+
