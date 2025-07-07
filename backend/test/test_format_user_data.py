@@ -7,7 +7,7 @@ class DummyLogger:
 def load_format_user_data():
     path = Path(__file__).resolve().parents[1] / "retirement_planner.py"
     lines = path.read_text().splitlines()
-    code = "\n".join(lines[314:347])
+    code = "\n".join(lines[346:379])
     namespace = {"logger": DummyLogger()}
     exec(code, namespace)
     return namespace["format_user_data"]
