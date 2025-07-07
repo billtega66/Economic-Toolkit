@@ -1,12 +1,12 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from datetime import datetime
 import time
+import asyncio
 # Load environment variables
 load_dotenv()
 import logging
@@ -19,8 +19,6 @@ from database import db
 from news_fetcher import NewsFetcher
 from retirement_planner import router as retirement_router
 from functools import lru_cache
-
-from fastapi import FastAPI, Query, HTTPException
 import finnhub
 
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
@@ -85,7 +83,7 @@ app.add_middleware(
 def get_cached_stock_data(cache_key: str):
     return None, 0  # (data, timestamp)
 
-def get_stock_data_with_cache(symbols: List[str]):
+async def get_stock_data_with_cache(symbols: List[str]):
     cache_key = ",".join(sorted(symbols))
     cached_data, timestamp = get_cached_stock_data(cache_key)
 
@@ -120,7 +118,7 @@ def get_stock_data_with_cache(symbols: List[str]):
                 "data": historical_data
             })
 
-            time.sleep(0.2)  # Avoid hitting 60 req/min limit
+            await asyncio.sleep(0.2)  # Avoid hitting 60 req/min limit
 
         except Exception as e:
             logger.error(f"Error fetching data for {symbol}: {e}")
@@ -161,7 +159,7 @@ async def get_articles(
 @app.get("/api/stocks")
 async def get_stock_data(symbols: List[str] = Query(["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA"])):
     try:
-        stock_data = get_stock_data_with_cache(symbols)
+        stock_data = await get_stock_data_with_cache(symbols)
         if not stock_data:
             return {"stocks": [], "message": "No stock data available"}
         return {"stocks": stock_data}
