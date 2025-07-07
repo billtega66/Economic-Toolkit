@@ -974,5 +974,3 @@ def initialize_app():
         logger.error(f"Error initializing retirement planner: {e}")
         return False
 
-# Initialize the application when this module is imported
-initialize_app()

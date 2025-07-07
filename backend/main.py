@@ -18,7 +18,7 @@ import asyncio
 from typing import List
 from database import db
 from news_fetcher import NewsFetcher
-from retirement_planner import router as retirement_router
+from retirement_planner import router as retirement_router, initialize_app
 from functools import lru_cache
 import finnhub
 
@@ -55,6 +55,9 @@ def fetch_with_retry(ticker, retries=3):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting lifespan")
+
+    # Initialize resources for retirement planner
+    initialize_app()
 
     scheduler.add_job(news_fetcher.fetch_and_save_business_us, 'interval', hours=1)
     scheduler.start()
