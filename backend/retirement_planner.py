@@ -6,6 +6,7 @@ import hashlib
 import faiss
 import numpy as np
 import ollama
+import time
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
