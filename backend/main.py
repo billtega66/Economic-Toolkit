@@ -37,7 +37,9 @@ scheduler = AsyncIOScheduler()
 
 
 # Initialize NewsFetcher
-NEWS_API_KEY = os.getenv("NEWS_API_KEY", "d403798f40db4331bae14a26284e9d71")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+if not NEWS_API_KEY:
+    raise EnvironmentError("NEWS_API_KEY environment variable is required")
 news_fetcher = NewsFetcher(api_key=NEWS_API_KEY, db=db)
 
 def fetch_with_retry(ticker, retries=3):
