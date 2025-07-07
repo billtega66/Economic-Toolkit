@@ -111,6 +111,22 @@ export const retirementApi = {
       console.error('Error generating retirement plan:', error);
       throw error;
     }
+  },
+
+  submitFeedback: async (
+    planId: string,
+    rating: number
+  ): Promise<{ status: string; [key: string]: unknown }> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/retirement/feedback`, {
+        plan_id: planId,
+        rating
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      throw error;
+    }
   }
 };
 
