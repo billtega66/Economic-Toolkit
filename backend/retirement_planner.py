@@ -377,6 +377,44 @@ def format_user_data(user_input):
         'retirement_goal': user_input.get('retirementSavingsGoal', 0)
     }
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Financial Calculation Helpers
+# ──────────────────────────────────────────────────────────────────────────────
+
+def future_value(present: float, annual_contribution: float, rate: float, years: int):
+    """Calculate future value with yearly contributions and record steps."""
+    savings = present
+    history = {
+        "contributions": [],
+        "growth": [],
+        "cumulative": [],
+    }
+
+    for i in range(1, years + 1):
+        growth = savings * rate
+        savings += growth + annual_contribution
+
+        history["contributions"].append({"year": i, "amount": annual_contribution})
+        history["growth"].append({"year": i, "amount": growth})
+        history["cumulative"].append({"year": i, "amount": savings})
+
+    return savings, history
+
+
+def compute_required_savings_rate(goal: float, current_savings: float, income: float,
+                                  years: int, rate: float) -> float:
+    """Compute savings rate needed each year to hit the goal."""
+    if years <= 0 or income <= 0:
+        return 0.0
+
+    future_current = current_savings * (1 + rate) ** years
+    denom = income * (((1 + rate) ** years - 1) / rate)
+    if denom <= 0:
+        return 0.0
+
+    req_rate = (goal - future_current) / denom
+    return max(0.0, min(req_rate, 0.50))
+
 # ────────────────────────────────────────────────────────────────────────────────
 # Prompt Generator with Personalization
 # ────────────────────────────────────────────────────────────────────────────────
@@ -537,52 +575,29 @@ def create_retirement_plan(user_input: dict):
     has_insurance = user_input.get('hasInsurance', 'no') == 'yes'
     insurance_payment = float(user_input.get('insurancePayment') or 0)
     
-    # Calculate all metrics
-    years_left = retirement_age - current_age
+    # Calculate all metrics with validation
+    years_left = max(0, retirement_age - current_age)
     annual_contribution = income * 0.15
     annual_return = 0.065
-    
-    # Track intermediate calculations for transparency
-    intermediate_calculations = {
-        "contributions": [],
-        "growth": [],
-        "cumulative": []
-    }
-    
-    # Projected savings calculation with intermediate steps
-    projected_savings = current_savings
-    cumulative = current_savings
-    
-    for year in range(1, years_left + 1):
-        # Growth on existing savings
-        year_growth = projected_savings * annual_return
-        
-        # Add this year's contribution
-        contribution = annual_contribution
-        
-        # Update projected savings
-        projected_savings = projected_savings + year_growth + contribution
-        
-        # Store intermediate calculations
-        intermediate_calculations["contributions"].append({
-            "year": current_age + year,
-            "amount": contribution
-        })
-        
-        intermediate_calculations["growth"].append({
-            "year": current_age + year,
-            "amount": year_growth
-        })
-        
-        intermediate_calculations["cumulative"].append({
-            "year": current_age + year,
-            "amount": projected_savings
-        })
+
+    # Future value of savings and contributions
+    projected_savings, intermediate_calculations = future_value(
+        current_savings,
+        annual_contribution,
+        annual_return,
+        years_left,
+    )
     
     # Calculate gap and required savings rate
     gap = goal - projected_savings
-    required_savings_rate = (goal - current_savings) / (income * years_left) if years_left > 0 else 0
-    required_savings_rate = min(max(required_savings_rate, 0.15), 0.50)
+    required_savings_rate = compute_required_savings_rate(
+        goal,
+        current_savings,
+        income,
+        years_left,
+        annual_return,
+    )
+    required_savings_rate = max(0.15, required_savings_rate)
     
     # Calculate benchmarks
     age_benchmarks = {
@@ -596,7 +611,11 @@ def create_retirement_plan(user_input: dict):
         65: 10.0
     }
     
-    benchmark_age = min(age_benchmarks.keys(), key=lambda x: abs(x - current_age))
+    candidate_ages = [age for age in age_benchmarks.keys() if age <= current_age]
+    if candidate_ages:
+        benchmark_age = max(candidate_ages)
+    else:
+        benchmark_age = min(age_benchmarks.keys())
     benchmark_multiplier = age_benchmarks[benchmark_age]
     benchmark_savings = income * benchmark_multiplier
     
