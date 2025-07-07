@@ -1,4 +1,5 @@
-import requests
+import aiohttp
+import asyncio
 from datetime import datetime
 from typing import Optional
 from transformers import pipeline
@@ -21,24 +22,33 @@ def clean_url(url):
     return re.sub(r'\\u003d', '=', url)
 
 
-def summarize_article(text: str) -> str:
+async def summarize_article(text: str) -> str:
     if not text:
         return "No summary available."
-    
+
     try:
         # Truncate long content to stay within token limits
-        result = summarizer(text[:1000], max_length=30, min_length=10, do_sample=False)
+        result = await asyncio.to_thread(
+            summarizer,
+            text[:1000],
+            max_length=30,
+            min_length=10,
+            do_sample=False,
+        )
         return result[0]["summary_text"]
     except Exception as e:
         logger.warning(f"Summarization failed: {e}")
         return "Summary generation failed."
     
-def extract_full_text(url: str) -> str:
+async def extract_full_text(url: str) -> str:
     try:
-        article = Article(url)
-        article.download()
-        article.parse()
-        return article.text
+        def _parse():
+            article = Article(url)
+            article.download()
+            article.parse()
+            return article.text
+
+        return await asyncio.to_thread(_parse)
     except Exception as e:
         logger.warning(f"Failed to extract article from {url}: {e}")
         return ""
@@ -59,15 +69,22 @@ class NewsFetcher:
                 "apiKey": self.api_key
             }
 
-            response = requests.get(url, params=params)
-            response.raise_for_status()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params) as response:
+                    response.raise_for_status()
+                    data = await response.json()
 
-            articles = response.json().get("articles", [])
+            articles = data.get("articles", [])
             processed = 0
 
             for article in articles:
-                full_text = extract_full_text(article["url"])
-                summary = summarize_article(full_text or article.get("content") or article.get("description") or article.get("title"))
+                full_text = await extract_full_text(article["url"])
+                summary = await summarize_article(
+                    full_text
+                    or article.get("content")
+                    or article.get("description")
+                    or article.get("title")
+                )
 
                 processed_article = {
                     "source": article["source"]["name"],
@@ -77,7 +94,6 @@ class NewsFetcher:
                     "url": article["url"],
                     "urlToImage": article.get("urlToImage"),
                     "publishedAt": datetime.fromisoformat(article["publishedAt"].replace('Z', '+00:00')),
-                    "content": article.get("content"),
                     "category": "business-us",
                     "summary": summary,
                     "content": full_text or article.get("content")
