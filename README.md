@@ -79,6 +79,12 @@ NEWSAPI_KEY=your_newsapi_key
 PORT=4000
 ```
 
+### Frontend (.env)
+```
+VITE_HUGGINGFACE_TOKEN=your_huggingface_token_here
+VITE_API_BASE_URL=/api
+```
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
