@@ -684,6 +684,7 @@ def create_retirement_plan(user_input: dict):
 
 def save_feedback(feedback_data: dict, path="data/retirement_feedback.json"):
     """Save user feedback on retirement plans"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     entry = {
         "feedback_id": str(uuid.uuid4()),
         "plan_id": feedback_data.get("plan_id"),
