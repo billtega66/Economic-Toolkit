@@ -14,6 +14,7 @@ A comprehensive financial planning application featuring a business news digest 
 - AI-powered retirement plan generation
 - Interactive savings projections and charts
 - Similar profile matching for personalized recommendations
+- Cached plan generation to avoid redundant calculations
 
 ## Getting Started
 
@@ -114,6 +115,11 @@ PORT=4000
 - Similar profile matching
 - Detailed retirement plan generation
 - Plan feedback system
+- Cached plan generation for repeat inputs
+
+The planner stores generated plans in `backend/data/retirement_plan_cache.json`.
+If a new request matches a previous profile, the cached plan is returned instead
+of calling the language model again.
 
 ## Development
 
