@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import { 
   DollarSign, 
   User, 
@@ -84,11 +83,11 @@ const RetirementPlanner = () => {
     try {
       console.log("📤 Sending data to backend:", formData);
 
-      const response = await axios.post("http://localhost:4000/api/retirement/plan", formData);
+      const planData = await retirementApi.generatePlan(formData as RetirementPlanInput);
 
-      console.log("✅ Received plan from backend:", response.data.retirement_plan);
+      console.log("✅ Received plan from backend:", planData);
       // Navigate and pass plan data to the result page
-      navigate("/retirement-plan", { state: { planData: response.data.retirement_plan } });
+      navigate("/retirement-plan", { state: { planData } });
     } catch (error) {
       console.error("❌ Error generating retirement plan:", error);
       setError("Failed to generate retirement plan. Please try again.");
