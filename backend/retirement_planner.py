@@ -910,7 +910,7 @@ This projection assumes:
 - Inflation impact on purchasing power
 
 ### 🌟 Final Thoughts
-{'You\'re in a great position — with consistency and smart investing, you\'re on track to retire comfortably. Keep the momentum going!' if metrics['gap_to_goal'] <= 0 else 'While there\'s work to be done, remember that every step forward counts. Stay committed to your plan, and you\'ll build the retirement you deserve.'}"""
+{"You're in a great position — with consistency and smart investing, you're on track to retire comfortably. Keep the momentum going!" if metrics['gap_to_goal'] <= 0 else "While there's work to be done, remember that every step forward counts. Stay committed to your plan, and you'll build the retirement you deserve."}"""
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Application Startup
@@ -937,5 +937,6 @@ def initialize_app():
         logger.error(f"Error initializing retirement planner: {e}")
         return False
 
-# Initialize the application when this module is imported
-initialize_app()
+# Initialize the application only when run as a script
+if __name__ == "__main__":
+    initialize_app()
