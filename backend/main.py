@@ -18,7 +18,6 @@ from typing import List
 from database import db
 from news_fetcher import NewsFetcher
 from retirement_planner import router as retirement_router
-from functools import lru_cache
 
 from fastapi import FastAPI, Query, HTTPException
 import finnhub
@@ -80,10 +79,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Cache stock data for 5 minutes to avoid rate limiting
-@lru_cache(maxsize=1)
+# Cache for stock data keyed by the symbol list string
+stock_cache: dict[str, tuple[list, float]] = {}
+
 def get_cached_stock_data(cache_key: str):
-    return None, 0  # (data, timestamp)
+    """Retrieve cached stock data and timestamp for a cache key."""
+    return stock_cache.get(cache_key, (None, 0))
+
+
+def update_stock_cache(cache_key: str, data):
+    """Update the in-memory stock cache."""
+    stock_cache[cache_key] = (data, time.time())
 
 def get_stock_data_with_cache(symbols: List[str]):
     cache_key = ",".join(sorted(symbols))
@@ -127,8 +133,7 @@ def get_stock_data_with_cache(symbols: List[str]):
             continue
 
     # Cache the result
-    get_cached_stock_data.cache_clear()
-    get_cached_stock_data(cache_key)
+    update_stock_cache(cache_key, stock_data)
     return stock_data
 
 
