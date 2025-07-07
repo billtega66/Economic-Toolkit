@@ -75,9 +75,10 @@ The application will be available at `http://localhost:5173`.
 ### Backend (.env)
 ```
 MONGODB_URI=your_mongodb_connection_string
-NEWSAPI_KEY=your_newsapi_key
+NEWS_API_KEY=your_newsapi_key
 PORT=4000
 ```
+The `NEWS_API_KEY` variable is required and no default key is provided.
 
 ## API Endpoints
 
