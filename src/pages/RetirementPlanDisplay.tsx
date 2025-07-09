@@ -3,15 +3,22 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, Download, ThumbsUp, ThumbsDown, User, TrendingUp, DollarSign, Check } from 'lucide-react';
-import { RetirementPlanResponse } from '../services/api';
+import { RetirementPlanResponse, retirementApi } from '../services/api';
 
 const RetirementPlanDisplay = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [planData, setPlanData] = useState<RetirementPlanResponse | null>(null);
-  const [feedback, setFeedback] = useState<{ rating: number | null; submitted: boolean }>({
+  const [feedback, setFeedback] = useState<{
+    rating: number | null;
+    submitted: boolean;
+    message: string | null;
+    error: boolean;
+  }>({
     rating: null,
-    submitted: false
+    submitted: false,
+    message: null,
+    error: false
   });
 
   useEffect(() => {
@@ -43,9 +50,24 @@ const RetirementPlanDisplay = () => {
     }).format(value);
   };
 
-  const handleFeedback = (rating: number) => {
-    setFeedback({ rating, submitted: true });
-    // TODO: Submit feedback to API
+  const handleFeedback = async (rating: number) => {
+    try {
+      await retirementApi.submitFeedback(planData.plan_id, rating);
+      setFeedback({
+        rating,
+        submitted: true,
+        message: 'Feedback submitted successfully.',
+        error: false
+      });
+    } catch (err) {
+      console.error('Error submitting feedback:', err);
+      setFeedback({
+        rating,
+        submitted: true,
+        message: 'Failed to submit feedback.',
+        error: true
+      });
+    }
   };
 
   return (
@@ -207,6 +229,18 @@ const RetirementPlanDisplay = () => {
                   No, needs improvement
                 </button>
               </div>
+            </div>
+          )}
+
+                    {feedback.submitted && feedback.message && (
+            <div
+              className={`p-4 rounded-lg border ${
+                feedback.error
+                  ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                  : 'bg-green-100 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+              }`}
+            >
+              {feedback.message}
             </div>
           )}
         </motion.div>

@@ -18,7 +18,7 @@ import asyncio
 from typing import List
 from database import db
 from news_fetcher import NewsFetcher
-from retirement_planner import router as retirement_router
+from retirement_planner import router as retirement_router, initialize_app
 from functools import lru_cache
 import finnhub
 
@@ -36,7 +36,9 @@ scheduler = AsyncIOScheduler()
 
 
 # Initialize NewsFetcher
-NEWS_API_KEY = os.getenv("NEWS_API_KEY", "d403798f40db4331bae14a26284e9d71")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+if not NEWS_API_KEY:
+    raise EnvironmentError("NEWS_API_KEY environment variable is required")
 news_fetcher = NewsFetcher(api_key=NEWS_API_KEY, db=db)
 
 def fetch_with_retry(ticker, retries=3):
@@ -55,6 +57,8 @@ def fetch_with_retry(ticker, retries=3):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting lifespan")
+
+    initialize_app()
 
     scheduler.add_job(news_fetcher.fetch_and_save_business_us, 'interval', hours=1)
     scheduler.start()

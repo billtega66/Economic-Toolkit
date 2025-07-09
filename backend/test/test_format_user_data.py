@@ -1,18 +1,48 @@
+"""Tests for the ``format_user_data`` helper.
+
+The original tests dynamically executed a slice of ``retirement_planner.py`` to
+avoid importing heavy optional dependencies.  The real module is now imported
+directly, but we stub the optional packages so the import succeeds even when the
+dependencies are not installed in the test environment.
+"""
+
+import types
+import sys
+import importlib
 from pathlib import Path
 
-class DummyLogger:
-    def warning(self, *args, **kwargs):
-        pass
+# Stub heavy optional dependencies so the module can be imported
+sys.modules.setdefault("faiss", types.ModuleType("faiss"))
+sys.modules.setdefault("ollama", types.ModuleType("ollama"))
+sys.modules.setdefault("numpy", types.ModuleType("numpy"))
+jinja2_mod = types.ModuleType("jinja2")
+setattr(jinja2_mod, "Template", object)
+sys.modules.setdefault("jinja2", jinja2_mod)
 
-def load_format_user_data():
-    path = Path(__file__).resolve().parents[1] / "retirement_planner.py"
-    lines = path.read_text().splitlines()
-    code = "\n".join(lines[314:347])
-    namespace = {"logger": DummyLogger()}
-    exec(code, namespace)
-    return namespace["format_user_data"]
+st = sys.modules.setdefault("sentence_transformers", types.ModuleType("sentence_transformers"))
+setattr(st, "SentenceTransformer", object)
+setattr(st, "CrossEncoder", object)
 
-format_user_data = load_format_user_data()
+lc_docs = types.ModuleType("langchain_core.documents")
+setattr(lc_docs, "Document", object)
+sys.modules.setdefault("langchain_core", types.ModuleType("langchain_core"))
+sys.modules.setdefault("langchain_core.documents", lc_docs)
+
+lts = types.ModuleType("langchain_text_splitters")
+setattr(lts, "RecursiveCharacterTextSplitter", object)
+sys.modules.setdefault("langchain_text_splitters", lts)
+
+# Add backend directory to sys.path so relative imports work
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+# Import module now that dependencies are stubbed
+spec = importlib.util.spec_from_file_location(
+    "retirement_planner",
+    (Path(__file__).resolve().parents[1] / "retirement_planner.py")
+)
+retirement_planner = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(retirement_planner)
+format_user_data = retirement_planner.format_user_data
 
 
 def test_age_clamped_low_high():
